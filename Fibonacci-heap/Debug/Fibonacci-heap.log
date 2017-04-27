@@ -1,0 +1,5 @@
+﻿  Fibonacci-heap.cpp
+d:\code\fibonacci-heap\fibonacci-heap\fibonacci-heap.cpp(214): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+d:\code\fibonacci-heap\fibonacci-heap\fibonacci-heap.cpp(215): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+  Fibonacci-heap.vcxproj -> D:\Code\Fibonacci-heap\Debug\Fibonacci-heap.exe
+  Fibonacci-heap.vcxproj -> D:\Code\Fibonacci-heap\Debug\Fibonacci-heap.pdb (Full PDB)
