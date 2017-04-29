@@ -31,43 +31,47 @@ struct node
 class FibonacciHeap
 {
 protected:
-	
+	node *min;
 	int heapSize;
-	node *heap;
 public:
 	FibonacciHeap() {
-		heap = NULL;
+		min = NULL;
 		heapSize = 0;
 	}
-	virtual ~FibonacciHeap() {
-		if (heap) {
-			_deleteAll(heap);
-		}
-	}
 	
-	void Union(FibonacciHeap H)
+	void Union(FibonacciHeap *H)
 	{
-		FibonacciHeap temp;
-		temp.heap = H.heap;
-		temp.heapSize = H.heapSize;
-		while (temp.heap != NULL)
-		{
-			insert(temp.Extract_Min());
+		heapSize = heapSize + H->heapSize;
+		if (H->min != NULL) {
+			//Get left most and right most node in heap
+			node *r1 = min->left;
+			node *l1 = min;
+			//Get left most and right most node of other heap
+			node *r2 = H->min->left;
+			node *l2 = H->min;
+			if (l1->value > l2->value)
+				min = l2;
+			else
+				min = l1;
+			l1->left = r2;
+			r2->right = l1;
+			l2->left = r1;
+			r1->right = l2;
 		}
 	}
 
 	bool isEmpty() {
-		return heap == NULL;
+		return min == NULL;
 	}
 
 	int getMinimum() {
-		return heap->value;
+		return min->value;
 	}
 
 
-	void decreaseKey(node* n, int value) {
-		heap = _decreaseKey(heap, n, value);
-	}
+	/*void decreaseKey(node* n, int value) {
+		min = _decreaseKey(min, n, value);
+	}*/
 	void insert(node* n)
 	{
 		n->left = n->right = n;
@@ -76,13 +80,58 @@ public:
 		n->child = NULL;
 		n->parent = NULL;
 
-		heap = _merge(heap, n);
+		if (min == NULL) {
+			min = n;
+			min->left = min;
+			min->right = min;
+		}
+		else if (n != NULL) {
+			if (min->value>n->value) {
+				node* temp = min;
+				min = n;
+				n = temp;
+			}
+			node* an = min->right;
+			node* bp = n->left;
+			min->right = n;
+			n->left = min;
+			an->left = bp;
+			bp->right = an;
+		}
+		heapSize++;
+	}
+	void insert(int value)
+	{
+		node* n = new node;
+		n->value = value;
+		insert(n);
 	}
 	node* find(int value) {
-		return _find(heap, value);
+		return _find(min, value);
 	}
 
+	void _deleteAll(node* n) {
+		if (n != NULL) {
+			if (n->value < 0) {
+				delete n;
+			}
+			else {
+				node* c = n;
+				do {
+					node* d = c;
+					c = c->right;
+					_deleteAll(d->child);
+					delete d;
+					//c->left = NULL;
+				} while (c != n);
+			}
+		}
+	}
+
+	
+
 	node* _merge(node* a, node* b) {
+		heapSize++;
 		if (a == NULL)return b;
 		if (b == NULL)return a;
 		if (a->value>b->value) {
@@ -96,35 +145,16 @@ public:
 		b->left = a;
 		an->left = bp;
 		bp->right = an;
-		heapSize++;
 		return a;
 	}
 
-	void _deleteAll(node* n) {
-		if (n != NULL) {
-			node* c = n;
-			do {
-				node* d = c;
-				c = c->right;
-				_deleteAll(d->child);
-				delete d;
-			} while (c != n);
-		}
-	}
-
-	void _addChild(node* parent, node* child) {
-		child->left = child->right = child;
-		child->parent = parent;
-		parent->degree++;
-		parent->child = _merge(parent->child, child);
-	}
-
+	
 
 	node* FibonacciHeap::Extract_Min()
 	{
 		node* p;
 		node* ptr;
-		node* z = heap;
+		node* z = min;
 		p = z;
 		ptr = z;
 		if (z == NULL)
@@ -140,59 +170,41 @@ public:
 			do
 			{
 				np = x->right;
-				(heap->left)->right = x;
-				x->right = heap;
-				x->left = heap->left;
-				heap->left = x;
-				if (x->value < heap->value)
-					heap = x;
+				(min->left)->right = x;
+				x->right = min;
+				x->left = min->left;
+				min->left = x;
+				if (x->value < min->value)
+					min = x;
 				x->parent = NULL;
 				x = np;
 			} while (np != ptr);
 		}
 		(z->left)->right = z->right;
 		(z->right)->left = z->left;
-		heap = z->right;
+		min = z->right;
 		if (z == z->right && z->child == NULL)
-			heap = NULL;
+			min = NULL;
 		else
 		{
-			heap = z->right;
+			min = z->right;
 			Consolidate();
 		}
-		heapSize = heapSize - 1;
+		heapSize--;
 		return p;
 	}
 
-	void FibonacciHeap::Fibonnaci_link(node* y, node* z)
-	{
-		(y->left)->right = y->right;
-		(y->right)->left = y->left;
-		if (z->right == z)
-			heap = z;
-		y->left = y;
-		y->right = y;
-		y->parent = z;
-		if (z->child == NULL)
-			z->child = y;
-		y->right = z->child;
-		y->left = (z->child)->left;
-		((z->child)->left)->right = y;
-		(z->child)->left = y;
-		if (y->value < (z->child)->value)
-			z->child = y;
-		z->degree++;
-	}
 	void FibonacciHeap::Consolidate()
 	{
 		int d, i;
 		float f = (log(heapSize)) / (log(2));
 		int D = f;
-		
+
 		node** A = new node*[D];
 		for (i = 0; i <= D; i++)
 			A[i] = NULL;
-		node* x = heap;
+
+		node* x = min;
 		node* y;
 		node* np;
 		node* pt = x;
@@ -209,75 +221,117 @@ public:
 					x = y;
 					y = np;
 				}
-				if (y == heap)
-					heap = x;
+				if (y == min)
+					min = x;
 				Fibonnaci_link(y, x);
 				if (x->right == x)
-					heap = x;
+					min = x;
 				A[d] = NULL;
 				d = d + 1;
 			}
 			A[d] = x;
 			x = x->right;
-		} while (x != heap);
-		heap = NULL;
+		} while (x != min);
+		min = NULL;
 		for (int j = 0; j <= D; j++)
 		{
 			if (A[j] != NULL)
 			{
 				A[j]->left = A[j];
 				A[j]->right = A[j];
-				if (heap != NULL)
+				if (min != NULL)
 				{
-					(heap->left)->right = A[j];
-					A[j]->right = heap;
-					A[j]->left = heap->left;
-					heap->left = A[j];
-					if (A[j]->value < heap->value)
-						heap = A[j];
+					(min->left)->right = A[j];
+					A[j]->right = min;
+					A[j]->left = min->left;
+					min->left = A[j];
+					if (A[j]->value < min->value)
+						min = A[j];
 				}
 				else
 				{
-					heap = A[j];
+					min = A[j];
 				}
-				if (heap == NULL)
-					heap = A[j];
-				else if (A[j]->value < heap->value)
-					heap = A[j];
+				if (min == NULL)
+					min = A[j];
+				else if (A[j]->value < min->value)
+					min = A[j];
 			}
 		}
 	}
 
-	node* _cut(node* heap, node* n) {
-		if (n->right == n) {
-			n->parent->child = NULL;
-		}
-		else {
-			n->right->left = n->left;
-			n->left->right = n->right;
-			n->parent->child = n->right;
-		}
-		n->right = n->left = n;
+	void FibonacciHeap::Fibonnaci_link(node* y, node* z)
+	{
+		(y->left)->right = y->right;
+		(y->right)->left = y->left;
+		if (z->right == z)
+			min = z;
+		y->left = y;
+		y->right = y;
+		y->parent = z;
+		if (z->child == NULL)
+			z->child = y;
+		y->right = z->child;
+		y->left = (z->child)->left;
+		((z->child)->left)->right = y;
+		(z->child)->left = y;
+		if (y->value < (z->child)->value)
+			z->child = y;
+		z->degree++;
+	}
+
+	node* createNode(int num)
+	{
+		node* n = new node;
+		n->value = num;
+		n->left = n->right = n;
+		n->degree = 0;
 		n->marked = false;
-		return _merge(heap, n);
+		n->child = NULL;
+		n->parent = NULL;
+		return n;
+	}
+	void firstEx()
+	{
+		node* n3 = createNode(3);
+		node* n23 = createNode(23);
+		node* n7 = createNode(7);
+		node* n21 = createNode(21);
+		node* n17 = createNode(17);
+		node* n24 = createNode(24);
+		node* n18 = createNode(18);
+		node* n52 = createNode(52);
+		node* n38 = createNode(38);
+		node* n30 = createNode(30);
+		node* n26 = createNode(26);
+		node* n39 = createNode(39);
+		node* n41 = createNode(41);
+		node* n35 = createNode(35);
+		node* n46 = createNode(46);
+		insert(n3);
+		
+		_addChild(n3, n38);
+		_addChild(n38, n41);
+		_addChild(n3, n18);
+		_addChild(n18, n39);
+		_addChild(n3, n52);
+		
+		insert(n21);
+		insert(n7);
+		insert(n23);
+		insert(n24);
+		_addChild(n26, n35);
+		_addChild(n24, n46);
+		_addChild(n24, n26);
+		insert(n17);
+		_addChild(n17, n30);
 	}
 
-	node* _decreaseKey(node* heap, node* n, int value) {
-		if (n->value<value)return heap;
-		n->value = value;
-		if (n->value<n->parent->value) {
-			heap = _cut(heap, n);
-			node* parent = n->parent;
-			n->parent = NULL;
-			while (parent != NULL && parent->marked) {
-				heap = _cut(heap, parent);
-				n = parent;
-				parent = n->parent;
-				n->parent = NULL;
-			}
-			if (parent != NULL && parent->parent != NULL)parent->marked = true;
-		}
-		return heap;
+	void _addChild(node* parent, node* child) {
+		child->left = child->right = child;
+		child->parent = parent;
+		parent->degree++;
+		parent->child = _merge(parent->child, child);
 	}
 
 	node* _find(node* heap, int value) {
@@ -292,99 +346,71 @@ public:
 		return NULL;
 	}
 
-	void dump() {
-		printf("digraph G {\n");
-		if (heap == NULL) {
+	void preorder() {
+		printf("Heap: {\n");
+		if (min == NULL) {
 			printf("empty;\n}\n");
 			return;
 		}
-		printf("minimum -> \"%d\" [constraint=false];\n", heap->value);
-		node* c = heap;
+		printf("minimum -> \"%d\";\n", min->value);
+		node* c = min;
 		do {
-			_dumpChildren(c);
+			listChildren(c);
+			printf("------------------------------------\n");
 			c = c->right;
-		} while (c != heap);
+		} while (c != min);
 		printf("}\n");
 	}
 
-	void _dumpChildren(node* n) {
+	void listChildren(node* n) {
+		printf("\"%d\" degree-> \"%d\";  ", n->value, n->degree);
 		printf("\"%d\" right-> \"%d\";\n", n->value, n->right->value);
-		printf("\"%d\" left-> \"%d\";\n", n->value, n->left->value);
-		if (n->marked)printf("\"%d\" marked;\n", n->value);
-		if (n->parent) {
-			printf("\"%d\" parent-> \"%d\";\n", n->value, n->parent->value);
-		}
+		//printf("\"%d\" left-> \"%d\";\n", n->value, n->left->value);
+		
 		if (n->child) {
 			node* c = n->child;
 			do {
+				printf("------------------------------------\n");
 				printf("\"%d\" child-> \"%d\";\n", n->value, c->value);
-				_dumpChildren(c);
+				printf("------------------------------------\n");
+				listChildren(c);
 				c = c->right;
 			} while (c != n->child);
+			
+		}
+		
+	}
+
+	void _InorderTree(node*x)
+	{
+		if(x->child != NULL)
+		{
+			_InorderTree(x->child);
+		}
+		if (x->right != min)
+		{
+			_InorderTree(x->right);
 		}
 	}
 };
-void test() {
-	FibonacciHeap h;
-	FibonacciHeap g;
-	node* twentythree = new node;
-	twentythree->value = 23;
-	node* seven = new node;
-	seven->value = 7;
+void test1() {
+	
 
-	node* twentyone = new node;
-	twentyone->value = 21;
-	node* eight = new node;
-	eight->value = 8;
-
-	h.insert(twentythree);
-	h.insert(seven);
-	g.insert(twentyone);
-	g.insert(eight);
-	//g.insert(40);
-	//g.insert(45);
-	FibonacciHeap x;
-	x.Union(g);
-	//g.Extract_Min();
-	//x.insert(g.heap);
-	/*h.insert(3);
-	h.insert(18);
-	h.insert(39);
-	h.insert(52);
-	h.insert(38);
-	h.insert(41);
-	h.insert(17);
-	h.insert(30);
-	h.insert(24);
-	h.insert(26);
-	h.insert(35);
-	h.insert(46);*/
-	//h.Extract_Min();
-	//h.removeMinimum();
-	//h.insert(5);
-	//h.insert(7);
-	//h.removeMinimum();
-	//h.insert(2);
-	/*node* nine = h.insert(90);
-	h.removeMinimum();
-	h.removeMinimum();
-	h.removeMinimum();
-	for (int i = 0; i<20; i += 2)h.insert(30 - i);
-	for (int i = 0; i<4; i++)h.removeMinimum();
-	for (int i = 0; i<20; i += 2)h.insert(30 - i);
-	h.insert(23);
-	for (int i = 0; i<7; i++)h.removeMinimum();
-	h.decreaseKey(nine, 1);
-	h.decreaseKey(h.find(28), 2);
-	h.decreaseKey(h.find(23), 3);*/
 	int i;
-	x.dump();
+	
+	FibonacciHeap x;
+	x.firstEx();
+	cout << "Before ExtractMin:\n";
+	x.preorder();
+	cout << "After ExtractMin:\n";
+	x.Extract_Min();
+	x.preorder();
 	cin >> i;
 }
 
 int main()
 {
-	test();
+	test1();
 	return 0;
 }
 
