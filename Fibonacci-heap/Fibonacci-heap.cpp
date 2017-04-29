@@ -68,10 +68,6 @@ public:
 		return min->value;
 	}
 
-
-	/*void decreaseKey(node* n, int value) {
-		min = _decreaseKey(min, n, value);
-	}*/
 	void insert(node* n)
 	{
 		n->left = n->right = n;
@@ -106,29 +102,6 @@ public:
 		n->value = value;
 		insert(n);
 	}
-	node* find(int value) {
-		return _find(min, value);
-	}
-
-	void _deleteAll(node* n) {
-		if (n != NULL) {
-			if (n->value < 0) {
-				delete n;
-			}
-			else {
-				node* c = n;
-				do {
-					node* d = c;
-					c = c->right;
-					_deleteAll(d->child);
-					delete d;
-					//c->left = NULL;
-				} while (c != n);
-			}
-		}
-	}
-
-	
 
 	node* _merge(node* a, node* b) {
 		heapSize++;
@@ -147,9 +120,6 @@ public:
 		bp->right = an;
 		return a;
 	}
-
-	
-
 	node* FibonacciHeap::Extract_Min()
 	{
 		node* p;
@@ -334,18 +304,6 @@ public:
 		parent->child = _merge(parent->child, child);
 	}
 
-	node* _find(node* heap, int value) {
-		node* n = heap;
-		if (n == NULL)return NULL;
-		do {
-			if (n->value == value)return n;
-			node* ret = _find(n->child, value);
-			if (ret)return ret;
-			n = n->right;
-		} while (n != heap);
-		return NULL;
-	}
-
 	void preorder() {
 		printf("Heap: {\n");
 		if (min == NULL) {
@@ -379,18 +337,6 @@ public:
 			
 		}
 		
-	}
-
-	void _InorderTree(node*x)
-	{
-		if(x->child != NULL)
-		{
-			_InorderTree(x->child);
-		}
-		if (x->right != min)
-		{
-			_InorderTree(x->right);
-		}
 	}
 };
 void test1() {
